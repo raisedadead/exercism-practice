@@ -20,11 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event.pull_request.draft == false &&
-      (github.event.pull_request.user.login == 'raisedadead' || 
-       github.event.pull_request.user.login == 'renovate[bot]' ||
-       github.event.pull_request.user.login == 'exercism-solutions-syncer[bot]')
+      github.event.pull_request.user.login == 'exercism-solutions-syncer[bot]'
     
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
       - name: Enable auto-merge with rebase strategy
         run: |
           # Enable auto-merge using rebase strategy
