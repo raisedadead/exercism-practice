@@ -4,6 +4,10 @@
 
 The `auto-merge.yml` workflow automatically merges pull requests using the rebase strategy.
 
+## Keep PR Branches Updated
+
+The `keep-prs-updated.yml` workflow runs twice daily to automatically update PR branches that are behind the base branch. This helps prevent merge conflicts by keeping branches current.
+
 ### How it works
 
 1. **Trigger**: The workflow runs when a PR is opened, synchronized, reopened, or marked as ready for review, or when a review is submitted.
@@ -48,3 +52,42 @@ gh pr merge --disable-auto <PR_NUMBER>
 ```
 
 Or through the GitHub UI: Click "Disable auto-merge" on the PR page.
+
+---
+
+## Keep PR Branches Updated
+
+The `keep-prs-updated.yml` workflow helps prevent merge conflicts by proactively updating PR branches.
+
+### How it works
+
+1. **Schedule**: Runs automatically twice daily (midnight and noon UTC)
+2. **Manual trigger**: Can also be triggered manually via GitHub Actions UI
+3. **Process**:
+   - Finds all open PRs from trusted users (raisedadead, renovate[bot])
+   - Checks if each PR branch is behind the base branch
+   - Attempts to rebase branches that are behind but still mergeable
+   - Pushes updated branches automatically
+
+### Benefits
+
+- **Prevents conflicts**: By keeping branches up to date, reduces the likelihood of merge conflicts
+- **Automatic**: Runs without manual intervention
+- **Safe**: Only updates branches that can be cleanly rebased (no conflicts)
+
+### When it doesn't update
+
+The workflow will skip updating a PR if:
+- The branch has merge conflicts
+- The PR is in draft mode
+- The PR is not from a trusted user
+- The branch is already up to date
+
+### Manual update
+
+You can also manually trigger this workflow:
+1. Go to Actions tab in GitHub
+2. Select "Keep PR Branches Updated"
+3. Click "Run workflow"
+
+This is useful if you want to update branches before the scheduled run.
