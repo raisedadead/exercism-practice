@@ -21,7 +21,8 @@ jobs:
     if: |
       github.event.pull_request.draft == false &&
       (github.event.pull_request.user.login == 'raisedadead' || 
-       github.event.pull_request.user.login == 'renovate[bot]')
+       github.event.pull_request.user.login == 'renovate[bot]' ||
+       github.event.pull_request.user.login == 'exercism-solutions-syncer[bot]')
     
     steps:
       - name: Enable auto-merge with rebase strategy

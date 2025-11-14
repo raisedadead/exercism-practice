@@ -33,7 +33,7 @@ jobs:
           
           # Get all open PRs from trusted users
           gh pr list --state open --json number,author,isDraft,headRefName,baseRefName | \
-          jq -r '.[] | select(.isDraft == false) | select(.author.login == "raisedadead" or .author.login == "renovate[bot]") | "\(.number)|\(.headRefName)|\(.baseRefName)"' | \
+          jq -r '.[] | select(.isDraft == false) | select(.author.login == "raisedadead" or .author.login == "renovate[bot]" or .author.login == "exercism-solutions-syncer[bot]") | "\(.number)|\(.headRefName)|\(.baseRefName)"' | \
           while IFS='|' read -r pr_number head_ref base_ref; do
             echo ""
             echo "=== Processing PR #$pr_number (${head_ref} -> ${base_ref}) ==="
