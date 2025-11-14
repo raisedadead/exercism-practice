@@ -63,19 +63,19 @@ jobs:
             if git rebase "origin/$BASE_REF"; then
               echo "Rebase successful, pushing..."
               if git push --force-with-lease origin "$HEAD_REF"; then
-                echo "✓ Successfully updated PR #$PR_NUMBER"
+                echo "Successfully updated PR #$PR_NUMBER"
               else
-                echo "✗ Failed to push updates for PR #$PR_NUMBER"
+                echo "Failed to push updates for PR #$PR_NUMBER"
                 exit 1
               fi
             else
-              echo "✗ Rebase failed for PR #$PR_NUMBER (likely has conflicts)"
+              echo "Rebase failed for PR #$PR_NUMBER (likely has conflicts)"
               echo "This PR requires manual intervention to resolve conflicts."
               git rebase --abort 2>/dev/null || true
               exit 1
             fi
           elif [ "$MERGEABLE" = "CONFLICTING" ]; then
-            echo "⚠️ PR has conflicts and requires manual resolution"
+            echo "PR has conflicts and requires manual resolution"
             exit 1
           else
             echo "PR is ready (state: $MERGE_STATE, mergeable: $MERGEABLE)"
@@ -84,6 +84,6 @@ jobs:
           # Enable auto-merge with rebase strategy
           echo "Enabling auto-merge with rebase strategy..."
           gh pr merge --rebase --auto $PR_NUMBER
-          echo "✓ Auto-merge enabled for PR #$PR_NUMBER"
+          echo "Auto-merge enabled for PR #$PR_NUMBER"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
