@@ -21,17 +21,69 @@ jobs:
     if: |
       github.event.pull_request.draft == false &&
       github.event.pull_request.user.login == 'exercism-solutions-syncer[bot]'
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      
-      - name: Enable auto-merge with rebase strategy
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
         run: |
-          # Enable auto-merge using rebase strategy
-          # This will automatically merge the PR when all conditions are met
-          # If there are conflicts, the PR will remain open until manually resolved
-          gh pr merge --rebase --auto ${{ github.event.pull_request.number }}
-          echo "Auto-merge enabled for PR #${{ github.event.pull_request.number }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update PR branch if behind and enable auto-merge
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          HEAD_REF="${{ github.event.pull_request.head.ref }}"
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+
+          echo "Processing PR #$PR_NUMBER (${HEAD_REF} -> ${BASE_REF})"
+
+          # Check merge state
+          MERGE_STATE=$(gh pr view $PR_NUMBER --json mergeStateStatus -q .mergeStateStatus)
+          MERGEABLE=$(gh pr view $PR_NUMBER --json mergeable -q .mergeable)
+
+          echo "Merge state: $MERGE_STATE"
+          echo "Mergeable: $MERGEABLE"
+
+          # If PR is behind and mergeable, update it
+          if [ "$MERGE_STATE" = "BEHIND" ] && [ "$MERGEABLE" = "MERGEABLE" ]; then
+            echo "PR is behind base branch, updating with rebase..."
+
+            # Fetch latest changes
+            git fetch origin "$BASE_REF" "$HEAD_REF"
+
+            # Checkout the PR branch
+            git checkout "$HEAD_REF"
+
+            # Rebase onto the base branch
+            if git rebase "origin/$BASE_REF"; then
+              echo "Rebase successful, pushing..."
+              if git push --force-with-lease origin "$HEAD_REF"; then
+                echo "Successfully updated PR #$PR_NUMBER"
+              else
+                echo "Failed to push updates for PR #$PR_NUMBER"
+                exit 1
+              fi
+            else
+              echo "Rebase failed for PR #$PR_NUMBER (likely has conflicts)"
+              echo "This PR requires manual intervention to resolve conflicts."
+              git rebase --abort 2>/dev/null || true
+              exit 1
+            fi
+          elif [ "$MERGEABLE" = "CONFLICTING" ]; then
+            echo "PR has conflicts and requires manual resolution"
+            exit 1
+          else
+            echo "PR is ready (state: $MERGE_STATE, mergeable: $MERGEABLE)"
+          fi
+
+          # Enable auto-merge with rebase strategy
+          echo "Enabling auto-merge with rebase strategy..."
+          gh pr merge --rebase --auto $PR_NUMBER
+          echo "Auto-merge enabled for PR #$PR_NUMBER"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
